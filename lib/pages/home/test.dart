@@ -15,7 +15,7 @@ class TestView extends StatelessWidget {
               style: TextStyle(color: Colors.purple, fontSize: 18),
             ),
             onPressed: () {
-              MusicAPI.test();
+              MusicAPI.getRankDetails();
             }),
         StateView(),
       ]),
@@ -35,7 +35,7 @@ class StateViewState extends State<StateView> {
   var hotSongs = [];
 
   StateViewState() {
-    MusicAPI.test().then((res) {
+    MusicAPI.getRankDetails().then((res) {
       if (mounted && res != null) {
         setState(() {
           testText = (res['playlist'] != null) ? res['playlist']['name'] : '-';

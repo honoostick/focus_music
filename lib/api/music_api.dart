@@ -1,126 +1,134 @@
-import 'package:dio/dio.dart';
 import 'dart:io';
+import '../utils/request.dart';
+import '../utils/utils.dart';
+import '../utils/constant.dart';
 import 'package:sprintf/sprintf.dart';
 import 'package:path_provider/path_provider.dart';
 
 class MusicAPI {
-  static String _baseUrl = "http://honoo.xyz:3000";
-
-  static Future test() async {
-    return await Dio().get(_baseUrl + '/top/list?idx=1').then((res) {
-      print('method test() called');
-      // print(res.runtimeType); // Response<dynamic>
-      if (res.statusCode == HttpStatus.ok) {
-        return res.data;
-      }
-      return "Bad Response";
-    });
+  static Future<Map> login(phone, password) async {
+    try {
+      return await request.post('/login/cellphone',
+          data: {"phone": phone, "password": password}).then((res) {
+        if (res.statusCode == HttpStatus.ok) {
+          Utils.setLocalMap(LocalData.M_PROFILE_LOGIN, res.data);
+          return Request.formatReturn(true, '登录成功', res.data);
+        }
+        return Request.formatReturn(false, res.data['msg'] ?? '登录失败', {});
+      });
+    } catch (e) {
+      return Request.formatReturn(false, '登录错误', {});
+    }
   }
 
-  // static Future<List<Lrc>> searchLrc(String keyWord) async {
-  //   var url = sprintf(_baseUrl, [keyWord, 20, 0]);
-  //   var list = <Lrc>[];
+    static Future<Map> logout() async {
+    try {
+      return await request.post('/logout').then((res) {
+        if (res.statusCode == HttpStatus.ok) {
+          return Request.formatReturn(true, '登出成功', res.data);
+        }
+        return Request.formatReturn(false, res.data['msg'] ?? '登出失败', {});
+      });
+    } catch (e) {
+      return Request.formatReturn(false, '登出错误', {});
+    }
+  }
 
-  //   return await Dio()
-  //       .get(url,
-  //           options: Options(
-  //               contentType:
-  //                   ContentType("application", "x-www-form-urlencoded")))
-  //       .then((resp) {
-  //     if (resp.statusCode == HttpStatus.ok) {
-  //       switch (_source) {
-  //         case "netease":
-  //           _packLrcData(
-  //               resp.data["data"]["songs"], list, ["id", "name", "lyrics"]);
-  //           break;
-  //         case "tencent":
-  //           _packLrcData(
-  //               resp.data["data"], list, ["media_mid", "albumname", "content"]);
-  //           break;
-  //         case "kugou":
-  //           _packLrcData(
-  //               resp.data["data"], list, ["hash", "filename", "lyric"]);
-  //           break;
-  //         case "kuwo": // dismiss
-  //           break;
-  //         default:
-  //       }
-  //     }
+  static Future<Map> checkLoginStatus() async {
+    try {
+      // print(request.interceptors);
+      return await request.post('/login/status').then((res) {
+        if (res.statusCode == HttpStatus.ok) {
+          Utils.setLocalMap(LocalData.M_PROFILE_CHECK, res.data);
+          return Request.formatReturn(true, '当前已登录', res.data);
+        }
+        return Request.formatReturn(false, res.data['msg'] ?? '登录检查失败', {});
+      });
+    } catch (e) {
+      return Request.formatReturn(false, '登录检查错误', {});
+    }
+  }
 
-  //     return list;
-  //   }).catchError((e) {
-  //     print(e);
-  //     return list;
-  //   });
-  // }
+  static Future<Map> getRankDetails([idx = 1]) async {
+    try {
+      return await request.get('/top/list?idx=$idx').then((res) {
+        if (res.statusCode == HttpStatus.ok) {
+          var playmap = res.data['playlist'];
+          return Request.formatReturn(true, '排行榜[$idx]获取成功', {
+            "tracks": playmap['tracks'].sublist(0, 5),
+            "coverImgUrl": playmap['coverImgUrl'],
+            "name": playmap['name'],
+          });
+        }
+        return Request.formatReturn(false, res.data['msg'] ?? '排行榜获取失败', {});
+      });
+    } catch (e) {
+      return Request.formatReturn(false, '排行榜获取错误', {});
+    }
+  }
 
-  // static Future<List<LrcClip>> getLrc(String id) async {
-  //   var url = sprintf(_baseGetUrl, [id]);
-  //   var list = <LrcClip>[];
-  //   return await Dio()
-  //       .get(url, options: Options(responseType: ResponseType.plain))
-  //       .then((res) {
-  //     if (res.statusCode == HttpStatus.ok) {
-  //       print(url);
-  //       var reg = RegExp(r"\[[\d|:|\.]*?\]");
+  static Future<Map> like(id) async {
+    try {
+      return await request.post('/like', data: {"id": id}).then((res) {
+        print(id);
+        print(res);
+        if (res.statusCode == HttpStatus.ok) {
+          return Request.formatReturn(true, '喜欢成功', res.data);
+        }
+        return Request.formatReturn(false, res.data['msg'] ?? '喜欢失败', {});
+      });
+    } catch (e) {
+      return Request.formatReturn(false, '喜欢错误', {});
+    }
+  }
 
-  //       for (var clip in reg.allMatches(res.data.toString())) {
-  //         var rawTime = clip.group(0).substring(1, clip.group(0).length - 1);
+  static Future<Map> unlike(id) async {
+    try {
+      return await request
+          .post('/like', data: {"id": id, "like": "false"}).then((res) {
+        if (res.statusCode == HttpStatus.ok) {
+          return Request.formatReturn(true, '取消喜欢成功', res.data);
+        }
+        return Request.formatReturn(false, res.data['msg'] ?? '取消喜欢失败', {});
+      });
+    } catch (e) {
+      return Request.formatReturn(false, '取消喜欢错误', {});
+    }
+  }
 
-  //         int milliTime = 0;
-  //         var spliceList = rawTime.split(".");
-  //         if (spliceList.length != 2) return list;
-  //         milliTime += int.parse(spliceList[1]);
-  //         var spliceList2 = spliceList[0].split(":");
-  //         int radix = 0;
-  //         for (int i = spliceList2.length - 1; i >= 0; i--) {
-  //           int radixMulti = radix == 0 ? 1 : radix * 60;
-  //           milliTime += int.parse(spliceList2[i]) * 1000 * radixMulti;
-  //           radix++;
-  //         }
+  static Future<Map> getLikeList([uid]) async {
+    try {
+      return await request
+          .post('/likelist', data: uid != null ? {"uid": uid} : {})
+          .then((res) async {
+        if (res.statusCode == HttpStatus.ok) {
+          if (res.data['ids'] != null && res.data['ids'].length > 0) {
+            var songs = await getSongDetail(res.data['ids'].join(','));
+            if (songs['ok']) {
+              return Request.formatReturn(true, '成功', songs['data']);
+            }
+          } else {
+            return Request.formatReturn(true, '成功', {});
+          }
+        }
+        return Request.formatReturn(false, res.data['msg'] ?? '喜欢列表获取失败', {});
+      });
+    } catch (e) {
+      return Request.formatReturn(false, '喜欢列表获取错误', {});
+    }
+  }
 
-  //         list.add(LrcClip(time: milliTime));
-  //       }
-
-  //       List splitList = res.data.toString().split(reg);
-  //       if (splitList.length > 1) {
-  //         splitList.removeAt(0);
-  //         for (var i = 0; i < splitList.length; i++) {
-  //           list[i].text = splitList[i];
-  //         }
-  //       } else {}
-  //       // res.data
-  //       //     .toString()
-  //       //     .replaceAll(RegExp(r"^\[.*?\]", multiLine: true), "");
-  //     }
-  //     return list;
-  //   }).catchError((e) {
-  //     print(e);
-  //     return list;
-  //   });
-  // }
-
-  // static Future<String> getMusicUrl(String id,
-  //     {int times = 0}) async {
-  //   return await Dio()
-  //       .get(url, options: Options(responseType: ResponseType.bytes))
-  //       .then((res) {
-  //     if (res.statusCode == HttpStatus.ok) {
-  //       print(res.redirects[0].location);
-  //       if (res.redirects.length != 0) {
-  //         return res.redirects[0].location.toString();
-  //       }
-  //       return "No Redirect Found";
-  //     }
-  //     return "Bad Response";
-  //   }).catchError((e) {
-  //     print(e);
-
-  //     if (quality != BPS.AUTO || times == 3)
-  //       return "Fetch Error";
-  //     else
-  //       return getMusicUrl(id, quality: BPS.AUTO, times: times + 1);
-  //   });
-  // }
-
+  static Future<Map> getSongDetail(String ids) async {
+    try {
+      return await request
+          .get('/song/detail', queryParameters: {"ids": ids}).then((res) {
+        if (res.statusCode == HttpStatus.ok) {
+          return Request.formatReturn(true, '成功', res.data);
+        }
+        return Request.formatReturn(false, res.data['msg'] ?? '歌曲详情获取失败', {});
+      });
+    } catch (e) {
+      return Request.formatReturn(false, '歌曲详情获取错误', {});
+    }
+  }
 }

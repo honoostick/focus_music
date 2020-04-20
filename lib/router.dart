@@ -14,12 +14,16 @@ class Router extends StatefulWidget {
 
 class _RouterState extends State<Router> {
   int navIndex = 0;
+  PageController _pc = PageController();
   List<Widget> _pages = [HomeView(), LrcView(), SettingView()];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[navIndex],
+      body: PageView(
+        controller: _pc,
+        children: _pages,
+      ), // IndexedStack
       bottomNavigationBar: BottomNavigationBar(
         key: Key("bottom_navbar"),
         currentIndex: navIndex,
@@ -29,11 +33,12 @@ class _RouterState extends State<Router> {
           BottomNavigationBarItem(
               icon: Icon(Icons.settings), title: Text("设置")),
         ],
-        fixedColor: Colors.deepPurple,
+        fixedColor: Theme.of(context).primaryColor,
         onTap: (index) {
           setState(() {
             navIndex = index;
           });
+          _pc.jumpToPage(index);
         },
       ),
       resizeToAvoidBottomInset: false,
