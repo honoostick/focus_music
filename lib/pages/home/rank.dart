@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:focus_music/store/user.dart';
+import 'package:provider/provider.dart';
 import '../../components/songList.dart';
 import '../../api/music_api.dart';
 import '../../utils/constant.dart';
@@ -23,22 +25,31 @@ class RankViewState extends State<RankView>
 
   RankViewState() {
     _tc = TabController(length: 3, vsync: this);
-    _tc.addListener(() {
-      if (_tc.index != _tc.previousIndex) {
-        // change tab
-        print('${_tc.index} ${_tc.previousIndex}');
-      }
-    });
+
     Constant.RANK_TYPE.forEach((i, v) {
       curDropItems.add(buildDropItem(i, v));
     });
+
     if (tracks == null || tracks.length == 0) {
-      getRank(0);
+      getRank(Provider.of<UserModel>(context).likeList, 0);
     }
   }
 
-  getRank([idx = 1]) {
-    MusicAPI.getRankDetails(idx).then((res) {
+  refreshPage() {
+    _tc = TabController(length: 3, vsync: this);
+
+    Constant.RANK_TYPE.forEach((i, v) {
+      curDropItems.add(buildDropItem(i, v));
+    });
+
+    if (tracks == null || tracks.length == 0) {
+      getRank(Provider.of<UserModel>(context).likeList, 0);
+    }
+  }
+
+  getRank(likeList, [idx = 1]) {
+    print(likeList);
+    MusicAPI.getRankDetails(likeList??[], idx).then((res) {
       var data = res['data'];
       if (res['ok'] && data.isNotEmpty) {
         setState(() {
@@ -86,7 +97,9 @@ class RankViewState extends State<RankView>
               DropdownButton(
                 style: TextStyle(
                   fontSize: 15,
+                  color: Theme.of(context).textTheme.button.color,
                 ),
+                focusColor: Theme.of(context).primaryColor,
                 value: _selectRank,
                 items: curDropItems,
                 onChanged: (v) {

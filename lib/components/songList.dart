@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:focus_music/api/music_api.dart';
 import 'package:focus_music/components/player/player.dart';
+import 'package:focus_music/services/music.dart';
 import '../utils/utils.dart';
 
 class SongListWidget extends StatelessWidget {
@@ -8,6 +9,16 @@ class SongListWidget extends StatelessWidget {
   final double listHeight;
   final ScrollController sc = ScrollController();
   SongListWidget(this.songs, [this.listHeight = 210]);
+
+  onTapItem(context, item) async {
+    var url = await MusicService.getUrl(context, item['id']);
+    var lrcClips = await MusicService.getLrc(item['id']);
+    Navigator.push(
+      context,
+      new MaterialPageRoute(
+          builder: (context) => PlayerWidget(item['name'], lrcClips, url)),
+    );
+  }
 
   Widget buildItem(ctx, item, order, isLast) {
     return Container(
@@ -50,9 +61,9 @@ class SongListWidget extends StatelessWidget {
                     ],
                   ))),
           IconButton(
-            icon: Icon(Icons.favorite),
+            icon: item['isLike'] ? Icon(Icons.favorite, color: Colors.grey,): Icon(Icons.favorite, color: Colors.red),
             onPressed: () {
-              MusicAPI.unlike(item['id']).then((res) {
+              MusicAPI.cancelFav(item['id']).then((res) {
                 Utils.message(ctx, content: res["msg"]);
                 // if (res["ok"]) {
 
@@ -92,12 +103,7 @@ class SongListWidget extends StatelessWidget {
               // return list;
               return GestureDetector(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    new MaterialPageRoute(
-                        builder: (context) => PlayerWidget(songs[i]['name'], [],
-                            'https://music.163.com/song/media/outer/url?id=${songs[i]['id']}.mp3')),
-                  );
+                  onTapItem(context, songs[i]);
                 },
                 child: buildItem(context, songs[i], i + 1, i == songs.length),
               );

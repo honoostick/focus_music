@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../store/home.dart';
-import '../../utils/utils.dart';
+import '../../store/user.dart';
 import './login.dart';
 import '../../api/music_api.dart';
 
@@ -31,6 +31,7 @@ class SettingViewState extends State<SettingView>
         setState(() {
           profile = data['profile'];
         });
+        Provider.of<UserModel>(context, listen: false).updateProfile(profile);
       }
       setState(() {
         profileLoading = false;

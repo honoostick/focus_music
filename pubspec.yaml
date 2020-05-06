@@ -31,6 +31,9 @@ dependencies:
   dio_cookie_manager: ^1.0.0  #latest version
   audioplayers: ^0.15.1
   provider: ^4.0.5
+  loading_animations: ^2.1.0
+  toast: ^0.1.5
+  bot_toast: ^2.4.0
 
 dev_dependencies:
   flutter_test:

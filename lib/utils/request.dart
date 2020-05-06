@@ -37,7 +37,7 @@ class Request {
     return {
       'ok': ok,
       'msg': msg,
-      'data': data,
+      'data': data ?? {},
     };
   }
 }

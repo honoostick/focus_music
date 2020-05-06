@@ -16,7 +16,8 @@ class PlayerWidget extends StatefulWidget {
       PlayerWidgetState(title, content, musicUrl: musicUrl);
 }
 
-class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderStateMixin {
+class PlayerWidgetState extends State<PlayerWidget>
+    with SingleTickerProviderStateMixin {
   final String title;
   final List<LrcClip> content;
   final String musicUrl;
@@ -28,15 +29,31 @@ class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderSta
 
   int probe = 0;
   double offset = 0;
+  // List<MaterialButton> _lrcItems = [];
+
   PlayerWidgetState(this.title, this.content, {this.musicUrl}) {
     playerListen();
+    // initLrcItems();
+  }
+
+  initLrcItems() {
+    // for (var i = 0; i < content.length; i++) {
+    //   _lrcItems.add(MaterialButton(
+    //     child: Text(
+    //       content[i].text,
+    //       style: TextStyle(
+    //           color: i == 0 ? Colors.purple[300] : Colors.white, fontSize: 16),
+    //     ),
+    //     onPressed: () {},
+    //   ));
+    // }
   }
 
   playerListen() {
     player.player.onAudioPositionChanged.listen((d) {
       setState(() {
         curPos = d;
-        // updateProbe(d);
+        updateProbe(d);
       });
     });
 
@@ -46,9 +63,7 @@ class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderSta
       });
     });
 
-    player.player.onPlayerStateChanged.listen((s) {
-      
-    });
+    player.player.onPlayerStateChanged.listen((s) {});
   }
 
   updateProbe(Duration d) {
@@ -69,8 +84,35 @@ class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderSta
           // sc.jumpTo(sc.position. + 50 * ac.value);
           sc.animateTo(50 * (probe - 5).toDouble(),
               duration: Duration(milliseconds: 200), curve: Curves.easeIn);
-        } else if (probe < 5) sc.jumpTo(0);
+        } else if (probe < 5) {
+          // sc.jumpTo(0);
+        }
       });
+
+      //probe == i
+      // if (probe > 0) {
+      //   setState(() {
+      //     _lrcItems[probe - 1] = MaterialButton(
+      //       child: Text(
+      //         content[probe - 1].text,
+      //         style: TextStyle(color: Colors.white, fontSize: 16),
+      //       ),
+      //       onPressed: () {},
+      //     );
+      //   });
+      // }
+      // if (probe < _lrcItems.length) {
+      //   setState(() {
+      //     _lrcItems.clear();
+      //     // _lrcItems[probe] = MaterialButton(
+      //     //   child: Text(
+      //     //     content[probe].text,
+      //     //     style: TextStyle(color: Colors.purple[300], fontSize: 18),
+      //     //   ),
+      //     //   onPressed: () {},
+      //     // );
+      //   });
+      // }
     }
   }
 
@@ -88,6 +130,7 @@ class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderSta
               children: <Widget>[
                 Text(
                   title,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 25),
                 ),
               ],
@@ -99,12 +142,19 @@ class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderSta
                 controller: sc,
                 children: () {
                   var tmp = List<Widget>();
+                  if (content == null) {
+                    return [];
+                  }
+                  
                   for (var i = 0; i < content.length; i++) {
                     if (probe == i) {
                       tmp.add(MaterialButton(
                         child: Text(
                           content[i].text,
-                          style: TextStyle(color: Colors.purple, fontSize: 18),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontSize: 23),
                         ),
                         onPressed: () {},
                       ));
@@ -112,7 +162,10 @@ class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderSta
                       tmp.add(MaterialButton(
                         child: Text(
                           content[i].text,
-                          style: TextStyle(color: Colors.black, fontSize: 16),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              color: Theme.of(context).backgroundColor,
+                              fontSize: 17),
                         ),
                         onPressed: () {},
                       ));
@@ -178,23 +231,31 @@ class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderSta
           size: 35,
         ),
         onPressed: () {
-          setState(() {
-            switch (player.state) {
-              case PlayState.Playing:
-                player.pause();
-                break;
-              case PlayState.None:
-                player.play(musicUrl);
-                break;
-              case PlayState.Pause:
-                player.resume();
-                break;
-              case PlayState.Stop:
-                player.resume();
-                break;
-              default:
-            }
-          });
+          try {
+            setState(() {
+              switch (player.state) {
+                case PlayState.Playing:
+                  player.pause();
+                  break;
+                case PlayState.None:
+                  if (musicUrl == null) {
+                    Utils.message(context, content: '播放链接为空');
+                    return;
+                  }
+                  player.play(musicUrl);
+                  break;
+                case PlayState.Pause:
+                  player.resume();
+                  break;
+                case PlayState.Stop:
+                  player.resume();
+                  break;
+                default:
+              }
+            });
+          } catch (e) {
+            Utils.message(context, content: '播放出错');
+          }
         });
   }
 
@@ -208,7 +269,7 @@ class PlayerWidgetState extends State<PlayerWidget> with SingleTickerProviderSta
 
   @override
   void dispose() {
-    player.dispose();
     super.dispose();
+    player.dispose();
   }
 }
